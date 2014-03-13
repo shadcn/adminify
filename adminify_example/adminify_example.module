@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * Example module for Adminify.
+ */
+
+/**
+ * Implements hook_adminify_info().
+ */
+function adminify_example_adminify_info() {
+  return array(
+    'administrator' => 'administrator.yml',
+  );
+}

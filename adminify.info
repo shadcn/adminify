@@ -1,0 +1,5 @@
+name = Adminify
+description = Simplify the Drupal admin.
+core = 7.x
+
+dependencies[] = libraries

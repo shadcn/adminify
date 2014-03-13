@@ -1,0 +1,243 @@
+<?php
+
+/**
+ * @file
+ * Simplify the Drupal admin.
+ */
+
+/**
+ * Implements hook_menu_alter().
+ */
+function adminify_menu_alter(&$items) {
+  $path = drupal_get_path('module', 'adminify');
+
+  // Use the admin path to show what we want.
+  $items['admin'] = array(
+    'title' => 'Administration',
+    'access callback' => TRUE,
+    'page callback' => 'adminify_admin_menu_block_page',
+    'weight' => 9,
+    'file' => 'adminify.admin.inc',
+    'file path' => $path,
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function adminify_theme() {
+  $theme = array();
+  $base = array('file' => 'adminify.theme.inc');
+
+  $theme['adminify_page'] = array(
+    'render element' => 'page',
+    'template' => 'templates/adminify-page'
+  ) + $base;
+
+  $theme['adminify_login'] = array(
+    'render element' => 'page',
+    'template' => 'templates/adminify-login'
+  ) + $base;
+
+  $theme['adminify_sidebar'] = array(
+    'variables' => array('pages' => NULL),
+    'template' => 'templates/adminify-sidebar'
+  ) + $base;
+
+  $theme['adminify_tabs'] = array(
+    'variables' => array('tabs' => NULL),
+    'template' => 'templates/adminify-tabs'
+  ) + $base;
+
+  $theme['adminify_section'] = array(
+    'variables' => array('section' => NULL),
+    'template' => 'templates/adminify-section'
+  ) + $base;
+
+  return $theme;
+}
+
+/**
+ * Implements hook_page_build().
+ */
+function adminify_page_build(&$page) {
+  if (_adminify_is_adminify_page()) {
+    // Render the admin page using adminify.tpl.php.
+    $page['#theme'] = 'adminify_page';
+    if (user_is_anonymous()) {
+      // If user is not logged in, show the login page.
+      $page['#theme'] = 'adminify_login';
+    }
+  }
+}
+
+/**
+ * Implements hook_page_alter().
+ */
+function adminify_page_alter(&$page) {
+  // Hide all elements from page except content.
+  if (_adminify_is_adminify_page()) {
+    foreach (element_children($page) as $element) {
+      if ($element != 'content') {
+        $page[$element]['#access'] = FALSE;
+      }
+    }
+
+    // For content, show only the system_main.  
+    foreach (element_children($page['content']) as $content_el) {
+      if ($content_el != 'system_main') {
+        $page['content'][$content_el]['#access'] = FALSE;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function adminify_form_user_login_alter(&$form, &$form_state, $form_id) {
+  // Add a back to front page link.
+  $back_link = l(t('Go back to front page'), '<front>');
+  $form['actions']['back'] = array(
+    '#markup' => $back_link,
+  );
+
+  // Add a custom submit callback.
+  $form['#submit'][] = 'adminify_form_user_login_submit';
+}
+
+/**
+ * Custom submit callback for user_login form.
+ */
+function adminify_form_user_login_submit(&$form, &$form_state) {
+  // Redirect to /admin on login.
+  $form_state['redirect'] = 'admin';
+}
+
+/**
+ * Implements hook_custom_theme().
+ */
+function adminify_custom_theme() {
+  // Set theme to Rafix for adminify pages.
+  if (_adminify_is_adminify_page()) {
+    // return 'bartik';
+  }
+}
+
+/**
+ * Loads adminify info.
+ */
+function _adminify_get_info() {
+  $cid = 'adminify_info';
+  if ($cache = cache_get($cid)) {
+    return $cache->data;
+  }
+  else {
+    $info = array();
+    $adminify_library_path = libraries_get_path('adminify');
+
+    // Load the Spyc library.
+    $spyc_library_path = libraries_get_path('spyc');
+    _libraries_require_once($spyc_library_path . '/' . 'Spyc.php');
+
+    $adminify_infos = module_invoke_all('adminify_info');
+    foreach ($adminify_infos as $role => $file) {
+      $info[$role] = Spyc::YAMLLoad($adminify_library_path . '/' . $file);
+    }
+
+    // Save to cache.
+    cache_set($cid, $info);
+
+    return $info;
+  }
+}
+
+/**
+ * Get adminify paths.
+ */
+function _adminify_get_paths() {
+  $paths = array();
+  $info = _adminify_get_info();
+
+  // Add admin to paths by default.
+  $paths['authenticated user'][] = 'admin';
+
+  foreach ($info as $role => $role_info) {
+    $sections = $role_info['sections'];
+    foreach ($sections as $section) {
+      $pages = $section['pages'];
+      foreach ($pages as $page) { 
+        $paths[$role][] = $page['path'];
+      }
+    }
+  }
+
+  return $paths;
+}
+
+/**
+ * Get adminify paths by role.
+ */
+function _adminify_get_paths_by_role($role) {
+  $adminify_paths = _adminify_get_paths();
+  return (isset($adminify_paths[$role])) ? $adminify_paths[$role] : array();
+}
+
+/**
+ * Get adminify pahs for a user.
+ */
+function _adminify_get_paths_for_user($user) {
+  $adminify_paths = array();
+
+  // Load adminify paths for each user role.
+  foreach ($user->roles as $role) {
+    $adminify_paths[$role] = _adminify_get_paths_by_role($role);
+  }
+
+  return $adminify_paths;
+}
+
+/**
+ * Get tabs for a path.
+ */
+function _adminify_get_tabs($path) {
+  $tabs = array();
+  $info = _adminify_get_info();
+
+  foreach ($info as $role => $role_info) {
+    $sections = $role_info['sections'];
+    foreach ($sections as $section) {
+      $pages = $section['pages'];
+      foreach ($pages as $page) {
+        if (!empty($page['tabs'])) {
+          $tabs[$page['path']] = $page['tabs'];
+        }
+      }
+    }
+  }
+
+  return !empty($tabs[$path]) ? $tabs[$path] : array();
+}
+
+/**
+ * Helper function to check if for adminify page.
+ */
+function _adminify_is_adminify_page() {
+  // Return TRUE if we are at admin.
+  if (current_path() == 'admin') {
+    return TRUE;
+  }
+
+  global $user;
+  $adminify_paths = _adminify_get_paths_for_user($user);
+  $current_path = current_path();
+
+  // Check if current user is within an adminify path.
+  foreach ($adminify_paths as $role => $paths) {
+    if (in_array($current_path, $paths)) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
