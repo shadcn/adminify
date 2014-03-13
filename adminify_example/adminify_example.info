@@ -3,3 +3,4 @@ description = Example module for Adminify.
 core = 7.x
 
 dependencies[] = adminify
+package = Administration
