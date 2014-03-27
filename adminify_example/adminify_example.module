@@ -20,9 +20,9 @@ function adminify_example_adminify_info() {
       'file' => 'content_editor.yml',
       'path' => $path
     ),
-    'author' => array(
-      'file' => 'author.yml',
-      'path' => $path
-    ),
+    // 'author' => array(
+    //   'file' => 'author.yml',
+    //   'path' => $path
+    // ),
   );
 }
