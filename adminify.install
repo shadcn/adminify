@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for adminify.
+ */
+
+/**
+ * Implements hook_requirements.
+ */
+function adminify_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+
+  if ($phase == 'install') {
+    if (module_exists('overlay')) {
+      $requirements['adminify'] = array(
+        'title' => $t('Adminify'),
+        'description' => $t('The Overlay module is not recommended when using the Adminify module. Please disable the Overlay module first. Then enable Adminify.'), 
+        'severity' => REQUIREMENT_ERROR, 
+      );
+    }
+  }
+
+  return $requirements;
+}
