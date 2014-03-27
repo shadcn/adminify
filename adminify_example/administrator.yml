@@ -11,7 +11,8 @@ sections:
       'Articles':
         path: 'admin/content'
         tabs:
-          'Add Article': 'node/add/article'
+          'Add Article':
+            path: 'node/add/article'
       'Pages':
         path: 'admin/content'
   'Users':
@@ -22,8 +23,10 @@ sections:
       'Manage users':
         path: 'admin/people'
         tabs:
-          'Add User': 'admin/people/create'
-          'Account Settings': 'admin/config/people/accounts'
+          'Add User':
+            path: 'admin/people/create'
+          'Account Settings':
+            path: 'admin/config/people/accounts'
       'Permissions':
         path: 'admin/people/permissions'
       'Roles':

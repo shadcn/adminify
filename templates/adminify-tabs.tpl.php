@@ -6,9 +6,9 @@
  */
 ?>
 <?php if (count($tabs)): ?>
-  <ul class="nav nav-pills pull-right">
-    <?php foreach ($tabs as $title => $path): ?>
-      <li><?php print l($title, $path); ?></li>
+  <ul class="nav nav-pills pull-right tabs">
+    <?php foreach ($tabs as $tab): ?>
+      <li><?php print $tab; ?></li>
     <?php endforeach; ?>
   </ul>
 <?php endif; ?>

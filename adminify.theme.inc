@@ -37,7 +37,8 @@ function adminify_preprocess_adminify_page(&$variables, $hook) {
   }
 
   // Add tabs.
-  $variables['tabs'] = theme('adminify_tabs');
+  $tabs = _adminify_get_tabs(current_path());
+  $variables['tabs'] = theme('adminify_tabs', array('tabs' => $tabs));
   // $action_links = _adminify_get_page_action_links();
   // $variables['action_links'] = theme('adminify_action_links', array('links' => $action_links));
 
@@ -142,5 +143,12 @@ function template_preprocess_adminify_user_menu(&$variables) {
  * Implements template_preprocess_adminify_tabs().
  */
 function template_preprocess_adminify_tabs(&$variables) {
-  $variables['tabs'] = _adminify_get_tabs(current_path());
+  $tabs = array();
+
+  // Render each tab as a link.
+  foreach ($variables['tabs'] as $title => $tab) {
+    $tabs[] = l($title, $tab['path']);
+  }
+
+  $variables['tabs'] = $tabs;
 }
