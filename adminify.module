@@ -51,9 +51,14 @@ function adminify_theme() {
     'template' => 'templates/adminify-login'
   ) + $base;
 
-  $theme['adminify_sidebar'] = array(
-    'variables' => array('pages' => NULL),
-    'template' => 'templates/adminify-sidebar'
+  $theme['adminify_sidebar_menu'] = array(
+    'variables' => array('sections' => NULL),
+    'template' => 'templates/adminify-sidebar-menu'
+  ) + $base;
+
+  $theme['adminify_user_menu'] = array(
+    'variables' => array('links' => NULL),
+    'template' => 'templates/adminify-user-menu'
   ) + $base;
 
   $theme['adminify_tabs'] = array(
@@ -213,6 +218,18 @@ function _adminify_get_sections_from_info($info) {
   }
 
   return $sections;
+}
+
+function _adminify_get_links_from_info($info) {
+  $links = array();
+
+  foreach ($info as $role => $role_info) {
+    if (isset($role_info['links'])) {
+      $links = array_merge($links, $role_info['links']);
+    }
+  }
+
+  return $links;
 }
 
 /**

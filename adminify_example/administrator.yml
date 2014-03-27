@@ -37,4 +37,11 @@ sections:
         path: 'admin/modules'
       'User':
         path: 'admin/config/people/accounts'
+links:
+  'Account':
+    icon: 'user'
+    path: 'user'
+  'Logout':
+    icon: 'sign-out'
+    path: 'user/logout'
 theme: rafix

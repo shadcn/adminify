@@ -18,8 +18,11 @@ function adminify_preprocess_adminify_page(&$variables, $hook) {
   $variables['adminify_user'] = $user;
   $variables['adminify_username'] = theme('username', array('account' => $user));
 
-  // Add sidebar.
-  $variables['sidebar'] = theme('adminify_sidebar');
+  // Add sidebar menu.
+  $variables['sidebar_menu'] = theme('adminify_sidebar_menu');
+
+  // Add user menu.
+  $variables['user_menu'] = theme('adminify_user_menu');
 
   // Add tabs.
   $variables['tabs'] = theme('adminify_tabs');
@@ -43,9 +46,9 @@ function adminify_preprocess_adminify_login(&$variables, $hook) {
 }
 
 /**
- * Implements template_preprocess_adminify_sidebar().
+ * Implements template_preprocess_adminify_sidebar_menu().
  */
-function template_preprocess_adminify_sidebar(&$variables) {
+function template_preprocess_adminify_sidebar_menu(&$variables) {
   $info = _adminify_get_info_for_current_user();
   $sections = _adminify_get_sections_from_info($info);
   $variables['sections'] = array();
@@ -98,6 +101,30 @@ function template_preprocess_adminify_section(&$variables) {
     'html' => TRUE,
     'attributes' => $link_attributes,
   ));
+}
+
+/**
+ * Implements template_preprocess_adminify_user_menu().
+ */
+function template_preprocess_adminify_user_menu(&$variables) {
+  $info = _adminify_get_info_for_current_user();
+  $links = _adminify_get_links_from_info($info);
+  $variables['sections'] = array();
+
+  // Format links and add to template.
+  foreach ($links as $key => $link) {
+    $link_title = '';
+
+    // Add icon to title.
+    if (isset($link['icon'])) {
+      $link_title .= '<i class="fa fa-' . $link['icon'] . '"></i>';
+    }
+
+    // Use key as title.
+    $link_title .= $key;
+
+    $variables['links'][] = l($link_title, $link['path'], array('html' => TRUE));
+  }
 }
 
 /**
