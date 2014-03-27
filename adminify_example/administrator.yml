@@ -1,0 +1,39 @@
+sections:
+  'Add content':
+    icon: 'plus'
+    pages:
+      'Add page':
+        path: 'node/add/page'
+  'Content':
+    icon: 'file'
+    pages:
+      'Articles':
+        path: 'admin/content'
+        tabs:
+          'Add Article': 'node/add/article'
+      'Pages':
+        path: 'admin/content'
+  'Users':
+    icon: 'user'
+    pages:
+      'Add user':
+        path: 'admin/people/create'
+      'All users':
+        path: 'admin/people'
+        tabs:
+          'Add User': 'admin/people/create'
+          'Account Settings': 'admin/config/people/accounts'
+  'Appearance':
+    icon: 'tint'
+    pages: 
+      'Theme':
+        path: 'admin/appearance'
+  'Settings':
+    icon: 'cog'
+    pages:
+      'General':
+        path: 'admin/config/system/site-information'
+      'Modules':
+        path: 'admin/modules'
+      'User':
+        path: 'admin/config/people/accounts'
