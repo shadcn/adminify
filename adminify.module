@@ -207,6 +207,7 @@ function _adminify_get_sections_from_info($info) {
 
   foreach ($info as $role => $role_info) {
     if (isset($role_info['sections'])) {
+      // Permissons in Drupal are additive, so we merge sections.
       $sections = array_merge($sections, $role_info['sections']);
     }
   }
