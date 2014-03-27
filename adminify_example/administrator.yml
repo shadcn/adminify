@@ -1,3 +1,4 @@
+# Admin sections
 sections:
   'Add content':
     icon: 'plus'
@@ -18,11 +19,15 @@ sections:
     pages:
       'Add user':
         path: 'admin/people/create'
-      'All users':
+      'Manage users':
         path: 'admin/people'
         tabs:
           'Add User': 'admin/people/create'
           'Account Settings': 'admin/config/people/accounts'
+      'Permissions':
+        path: 'admin/people/permissions'
+      'Roles':
+        path: 'admin/people/permissions/roles'
   'Appearance':
     icon: 'tint'
     pages: 
@@ -37,6 +42,7 @@ sections:
         path: 'admin/modules'
       'User':
         path: 'admin/config/people/accounts'
+# User links
 links:
   'Account':
     icon: 'user'
@@ -44,4 +50,5 @@ links:
   'Logout':
     icon: 'sign-out'
     path: 'user/logout'
+# Adminify theme    
 theme: rafix
