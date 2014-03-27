@@ -1,0 +1,6 @@
+sections:
+  'Add Content':
+    icon: 'plus'
+    pages:
+      'Add article':
+        path: 'node/add/article'

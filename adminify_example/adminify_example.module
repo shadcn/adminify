@@ -9,7 +9,20 @@
  * Implements hook_adminify_info().
  */
 function adminify_example_adminify_info() {
+  $path = drupal_get_path('module', 'adminify_example');
+
   return array(
-    'administrator' => 'administrator.yml',
+    'administrator' => array(
+      'file' => 'administrator.yml',
+      'path' => $path,
+    ),
+    'content editor' => array(
+      'file' => 'content_editor.yml',
+      'path' => $path
+    ),
+    'author' => array(
+      'file' => 'author.yml',
+      'path' => $path
+    ),
   );
 }

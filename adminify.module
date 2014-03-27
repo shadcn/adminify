@@ -134,15 +134,18 @@ function _adminify_get_info() {
   }
   else {
     $info = array();
-    $adminify_library_path = libraries_get_path('adminify');
 
     // Load the Spyc library.
     $spyc_library_path = libraries_get_path('spyc');
     _libraries_require_once($spyc_library_path . '/' . 'Spyc.php');
 
     $adminify_infos = module_invoke_all('adminify_info');
-    foreach ($adminify_infos as $role => $file) {
-      $info[$role] = Spyc::YAMLLoad($adminify_library_path . '/' . $file);
+    foreach ($adminify_infos as $role => $adminify_info) {
+      // Check if file exists
+      $file_path = $adminify_info['path'] . '/' . $adminify_info['file'];
+      if (file_exists($file_path)) {
+        $info[$role] = Spyc::YAMLLoad($file_path);
+      }
     }
 
     // Save to cache.
@@ -150,6 +153,27 @@ function _adminify_get_info() {
 
     return $info;
   }
+}
+
+
+/**
+ * Get adminify info for a role.
+ */
+function _adminify_get_info_for_role($role) {
+  $info = _adminify_get_info();
+  return (isset($info[$role])) ? $info[$role] : array();
+}
+
+/**
+ * Get adminify info for a user.
+ */
+function _adminify_get_info_for_user($user) {
+  $info = array();
+  foreach ($user->roles as $role) {
+    $info[$role] = _adminify_get_info_for_role($role);
+  }
+
+  return $info;
 }
 
 /**
@@ -165,9 +189,11 @@ function _adminify_get_paths() {
   foreach ($info as $role => $role_info) {
     $sections = $role_info['sections'];
     foreach ($sections as $section) {
-      $pages = $section['pages'];
-      foreach ($pages as $page) { 
-        $paths[$role][] = $page['path'];
+      if (isset($section['pages'])) {
+        $pages = $section['pages'];
+        foreach ($pages as $page) { 
+          $paths[$role][] = $page['path'];
+        }
       }
     }
   }
@@ -184,7 +210,7 @@ function _adminify_get_paths_by_role($role) {
 }
 
 /**
- * Get adminify pahs for a user.
+ * Get adminify paths for a user.
  */
 function _adminify_get_paths_for_user($user) {
   $adminify_paths = array();
