@@ -62,16 +62,42 @@ function template_preprocess_adminify_section(&$variables) {
   $title = key($variables['section']);
   $section = reset($variables['section']);
 
-  // Add title and icon to template.
+  // Add title to template.
   $variables['title'] = $title;
-  $variables['icon'] = isset($section['icon']) ? $section['icon'] : '';
+
+  // Create a section id from $title.
+  $variables['section_id'] = $section_id = drupal_html_id($title);
+
+  // Link for section.
+  $link_title = '';
+  $link_attributes = array();
+  if (isset($section['icon'])) {
+    $link_title .= '<i class="fa fa-' . $section['icon'] . '"></i>';
+  }
+  $link_title .= $title;
 
   // Build an array of pages.
   $variables['pages'] = array();
-  $section_pages = $section['pages'];
-  foreach ($section_pages as $key => $section_page) {
-    $variables['pages'][] = l($key, $section_page['path']);
+  if (isset($section['pages'])) {
+    $section_pages = $section['pages'];
+    foreach ($section_pages as $key => $section_page) {
+      $variables['pages'][] = l($key, $section_page['path']);
+    }
+
+    // Add icon to link.
+    $link_title .= '<i class="arrow fa fa-angle-right pull-right"></i>';
+    // $link_attributes['data-toggle'] = 'dropdown';
+    $link_attributes['data-toggle'] = 'collapse';
+    $link_attributes['data-target'] = '#'. $section_id;
   }
+
+  // Add link to template.
+  $variables['link'] = l($link_title, current_path(), array(
+    'absolute' => TRUE,
+    'fragment' => FALSE,
+    'html' => TRUE,
+    'attributes' => $link_attributes,
+  ));
 }
 
 /**
