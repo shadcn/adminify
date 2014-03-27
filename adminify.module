@@ -137,7 +137,8 @@ function adminify_form_user_login_submit(&$form, &$form_state) {
 function adminify_custom_theme() {
   // Set theme specified in yml file.
   if (_adminify_is_adminify_page()) {
-    return _adminify_get_theme_for_current_user();
+    $theme = _adminify_get_theme_for_current_user();
+    return (!empty($theme)) ? $theme : variable_get('admin_theme');
   }
 }
 
@@ -240,7 +241,7 @@ function _adminify_get_paths() {
   $info = _adminify_get_info();
 
   // Add admin to paths by default.
-  $paths['authenticated user'][] = 'admin';
+  // $paths['authenticated user'][] = 'admin';
 
   foreach ($info as $role => $role_info) {
     $sections = $role_info['sections'];
@@ -273,7 +274,9 @@ function _adminify_get_paths_for_user($user) {
 
   // Load adminify paths for each user role.
   foreach ($user->roles as $role) {
-    $adminify_paths[$role] = _adminify_get_paths_by_role($role);
+    if ($paths = _adminify_get_paths_by_role($role)) {
+      $adminify_paths[$role] = $paths;
+    }
   }
 
   return $adminify_paths;
@@ -335,12 +338,18 @@ function _adminify_get_theme_for_role($role) {
  * Helper function to check if for adminify page.
  */
 function _adminify_is_adminify_page() {
-  // Return TRUE if we are at admin.
+  global $user;
+
+  // Check when on /admin path.
   if (current_path() == 'admin') {
-    return TRUE;
+    if (user_is_anonymous() || _adminify_user_is_adminified($user)) {
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
   }
 
-  global $user;
   $adminify_paths = _adminify_get_paths_for_user($user);
   $current_path = current_path();
 
@@ -352,6 +361,12 @@ function _adminify_is_adminify_page() {
   }
 
   return FALSE;
+}
+
+// Checks if a user is adminified.
+function _adminify_user_is_adminified($user) {
+  $adminify_paths = _adminify_get_paths_for_user($user);
+  return (count($adminify_paths)) ? TRUE : FALSE;
 }
 
 // Returns adminify roles ordered by weight.
