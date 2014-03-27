@@ -37,3 +37,4 @@ sections:
         path: 'admin/modules'
       'User':
         path: 'admin/config/people/accounts'
+theme: bartik

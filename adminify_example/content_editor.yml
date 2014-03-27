@@ -4,3 +4,4 @@ sections:
     pages:
       'Add article':
         path: 'node/add/article'
+theme: rafix

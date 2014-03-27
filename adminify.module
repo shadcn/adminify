@@ -23,6 +23,18 @@ function adminify_menu_alter(&$items) {
 }
 
 /**
+ * Implements hook_module_implements_alter().
+ */
+function adminify_module_implements_alter(&$implementations, $hook) {
+  // Move adminify implementation of hook_custom_theme to end of array.
+  if ($hook == 'custom_theme') {
+    $group = $implementations['adminify'];
+    unset($implementations['adminify']);
+    $implementations['adminify'] = $group;
+  }
+}
+
+/**
  * Implements hook_theme().
  */
 function adminify_theme() {
@@ -118,9 +130,9 @@ function adminify_form_user_login_submit(&$form, &$form_state) {
  * Implements hook_custom_theme().
  */
 function adminify_custom_theme() {
-  // Set theme to Rafix for adminify pages.
+  // Set theme specified in yml file.
   if (_adminify_is_adminify_page()) {
-    // return 'bartik';
+    return _adminify_get_theme_for_current_user();
   }
 }
 
@@ -272,6 +284,36 @@ function _adminify_get_tabs($path) {
 }
 
 /**
+ * Helper function to get the theme for the current user.
+ */
+function _adminify_get_theme_for_current_user() {
+  global $user;
+  return _adminify_get_theme_for_user($user);
+}
+
+/**
+ * Helper function to get the theme for a user.
+ */
+function _adminify_get_theme_for_user($user) {
+  $roles = _adminify_order_roles_by_weight($user->roles);
+
+  // Drupal recomments that roles are ordered from least permissive to most permissive.
+  // We take the last role (most permissive) in the array.
+  $role = array_pop($roles);
+
+  // Get the adminify theme for this role.
+  return _adminify_get_theme_for_role($role);
+}
+
+/**
+ * Helper function to get the theme for a role.
+ */
+function _adminify_get_theme_for_role($role) {
+  $info = _adminify_get_info_for_role($role);
+  return isset($info['theme']) ? $info['theme'] : '';
+}
+
+/**
  * Helper function to check if for adminify page.
  */
 function _adminify_is_adminify_page() {
@@ -292,4 +334,28 @@ function _adminify_is_adminify_page() {
   }
 
   return FALSE;
+}
+
+// Returns adminify roles ordered by weight.
+function _adminify_get_roles() {
+  $roles = array();
+
+  $info = _adminify_get_info();
+  $adminify_roles = array_keys($info);
+
+  return _adminify_order_roles_by_weight($roles);
+}
+
+// Orders an array of user roles by weight.
+function _adminify_order_roles_by_weight($roles) {
+  $ordered_roles = array();
+  $user_roles = user_roles();
+
+  foreach ($user_roles as $user_role) {
+    if (in_array($user_role, $roles)) {
+      $ordered_roles[] = $user_role;
+    }
+  }
+
+  return $ordered_roles;
 }
