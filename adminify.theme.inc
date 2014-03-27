@@ -118,12 +118,10 @@ function template_preprocess_adminify_section(&$variables) {
  * Implements template_preprocess_adminify_user_menu().
  */
 function template_preprocess_adminify_user_menu(&$variables) {
-  $info = _adminify_get_info_for_current_user();
-  $links = _adminify_get_links_from_info($info);
-  $variables['sections'] = array();
+  $links = array();
 
   // Format links and add to template.
-  foreach ($links as $key => $link) {
+  foreach ($variables['links'] as $key => $link) {
     $link_title = '';
 
     // Add icon to title.
@@ -134,8 +132,10 @@ function template_preprocess_adminify_user_menu(&$variables) {
     // Use key as title.
     $link_title .= $key;
 
-    $variables['links'][] = l($link_title, $link['path'], array('html' => TRUE));
+    $links[] = l($link_title, $link['path'], array('html' => TRUE));
   }
+
+  $variables['links'] = $links;
 }
 
 /**

@@ -1,7 +1,6 @@
 sections:
-  'Add content':
-    icon: 'plus'
+  'Manage content':
     pages:
-      'Add article':
-        path: 'node/add/article'
+      'Articles':
+        path: 'admin/content'
 theme: rafix

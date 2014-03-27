@@ -1,0 +1,14 @@
+sections:
+  'Add content':
+    icon: 'plus'
+    pages:
+      'Add article':
+        path: 'node/add/article'
+      'Add page':
+        path: 'node/add/page'
+links:
+  'My Account':
+    path: 'user'
+  'Logout':
+    path: 'user/logout'
+theme: rafix
