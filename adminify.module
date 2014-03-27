@@ -52,7 +52,7 @@ function adminify_theme() {
   ) + $base;
 
   $theme['adminify_sidebar_menu'] = array(
-    'variables' => array('sections' => NULL),
+    'variables' => array('links' => NULL),
     'template' => 'templates/adminify-sidebar-menu'
   ) + $base;
 

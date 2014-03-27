@@ -10,6 +10,10 @@
  */
 function adminify_preprocess_adminify_page(&$variables, $hook) {
   global $user;
+  $info = _adminify_get_info_for_current_user();
+
+  // Add the page title.
+  $variables['title'] = drupal_get_title();
 
   // Add messages to adminify template.
   $variables['messages'] = theme('status_messages');
@@ -19,18 +23,23 @@ function adminify_preprocess_adminify_page(&$variables, $hook) {
   $variables['adminify_username'] = theme('username', array('account' => $user));
 
   // Add sidebar menu.
-  $variables['sidebar_menu'] = theme('adminify_sidebar_menu');
+  $variables['sidebar_menu'] = '';
+  $sections = _adminify_get_sections_from_info($info);
+  if (count($sections)) {
+    $variables['sidebar_menu'] = theme('adminify_sidebar_menu', array('links' => $sections));
+  }
 
   // Add user menu.
-  $variables['user_menu'] = theme('adminify_user_menu');
+  $variables['user_menu'] = '';
+  $links = _adminify_get_links_from_info($info);
+  if (count($links)) {
+    $variables['user_menu'] = theme('adminify_user_menu', array('links' => $links));
+  }
 
   // Add tabs.
   $variables['tabs'] = theme('adminify_tabs');
   // $action_links = _adminify_get_page_action_links();
   // $variables['action_links'] = theme('adminify_action_links', array('links' => $action_links));
-
-  // Add the page title.
-  $variables['title'] = drupal_get_title();
 
   // Add breadcrumb.
   // TODO: Breadcrumb should be built from adminify paths.
@@ -49,13 +58,15 @@ function adminify_preprocess_adminify_login(&$variables, $hook) {
  * Implements template_preprocess_adminify_sidebar_menu().
  */
 function template_preprocess_adminify_sidebar_menu(&$variables) {
-  $info = _adminify_get_info_for_current_user();
-  $sections = _adminify_get_sections_from_info($info);
-  $variables['sections'] = array();
+  $links = $variables['links'];
+  $sections = array();
 
-  foreach ($sections as $key => $section) {
-    $variables['sections'][] = theme('adminify_section', array('section' => array($key => $section)));
+  // Render each section as an adminify section.
+  foreach ($links as $key => $link) {
+    $sections[] = theme('adminify_section', array('section' => array($key => $link)));
   }
+
+  $variables['sections'] = $sections;
 }
 
 /**
