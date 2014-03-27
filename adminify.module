@@ -170,10 +170,36 @@ function _adminify_get_info_for_role($role) {
 function _adminify_get_info_for_user($user) {
   $info = array();
   foreach ($user->roles as $role) {
-    $info[$role] = _adminify_get_info_for_role($role);
+    $adminify_info = _adminify_get_info_for_role($role);
+    if (count($adminify_info)) {
+      $info[$role] = $adminify_info;
+    }
   }
 
   return $info;
+}
+
+/**
+ * Returns adminify info for the current user.
+ */
+function _adminify_get_info_for_current_user() {
+  global $user;
+  return _adminify_get_info_for_user($user);
+}
+
+/**
+ * Returns sections from info array.
+ */
+function _adminify_get_sections_from_info($info) {
+  $sections = array();
+
+  foreach ($info as $role => $role_info) {
+    if (isset($role_info['sections'])) {
+      $sections = array_merge($sections, $role_info['sections']);
+    }
+  }
+
+  return $sections;
 }
 
 /**

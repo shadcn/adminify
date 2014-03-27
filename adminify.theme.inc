@@ -46,13 +46,12 @@ function adminify_preprocess_adminify_login(&$variables, $hook) {
  * Implements template_preprocess_adminify_sidebar().
  */
 function template_preprocess_adminify_sidebar(&$variables) {
-  $info = _adminify_get_info();
+  $info = _adminify_get_info_for_current_user();
+  $sections = _adminify_get_sections_from_info($info);
+  $variables['sections'] = array();
 
-  foreach ($info as $role => $role_info) {
-    $sections = $role_info['sections'];
-    foreach ($sections as $key => $section) {
-      $variables['sections'][] = theme('adminify_section', array('section' => array($key => $section)));
-    }
+  foreach ($sections as $key => $section) {
+    $variables['sections'][] = theme('adminify_section', array('section' => array($key => $section)));
   }
 }
 
