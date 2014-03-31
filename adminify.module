@@ -135,6 +135,12 @@ function adminify_form_user_login_submit(&$form, &$form_state) {
  * Implements hook_custom_theme().
  */
 function adminify_custom_theme() {
+
+  // Temporarily set theme to rafix on /admin page.
+  if (current_path() == 'admin') {
+    return 'rafix';
+  }
+
   // Set theme specified in yml file.
   if (_adminify_is_adminify_page()) {
     $theme = _adminify_get_theme_for_current_user();
