@@ -356,6 +356,11 @@ function _adminify_is_adminify_page() {
     }
   }
 
+  // Return TRUE for all /admin pages for now.
+  if (drupal_match_path(current_path(), "admin/*")) {
+    return TRUE;
+  }
+
   $adminify_paths = _adminify_get_paths_for_user($user);
   $current_path = current_path();
 
