@@ -10,3 +10,10 @@ You need adminify if:
 * You want to create different administration for your users.
 * You want an admin login form
 * You want different admin theme for different user roles.
+
+## How does it wor?
+
+This module reads config from a flat YAML file and build a custom Drupal admin (configurable per role) for your users.
+
+Every section of the admin can be customized from the flat file.
+
