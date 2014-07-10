@@ -1,5 +1,8 @@
 Adminify
 ===
+
+### Note: I don't have the resources to maintain this module anymore. If you would like to take over, create an issue.
+
 Simplify the Drupal admin.
 
 You need adminify if:
