@@ -5,107 +5,82 @@
  * Simplify the Drupal admin.
  */
 
+define('ADMINIFY_DEFAULT_THEME', 'kitchen');
+
+define('ADMINIFY_REGION_PREFIX', 'adminify_');
+
 /**
  * Implements hook_menu_alter().
  */
 function adminify_menu_alter(&$items) {
   $path = drupal_get_path('module', 'adminify');
 
-  // Use the admin path to show what we want.
-  $items['admin'] = array(
-    'title' => 'Administration',
-    'access callback' => TRUE,
-    'page callback' => 'adminify_admin_menu_block_page',
-    'weight' => 9,
-    'file' => 'adminify.admin.inc',
-    'file path' => $path,
-  );
-}
-
-/**
- * Implements hook_module_implements_alter().
- */
-function adminify_module_implements_alter(&$implementations, $hook) {
-  // Move adminify implementation of hook_custom_theme to end of array.
-  if ($hook == 'custom_theme') {
-    $group = $implementations['adminify'];
-    unset($implementations['adminify']);
-    $implementations['adminify'] = $group;
-  }
+  // Handle the callback for the admin path.
+  $items['admin']['page callback'] = 'adminify_menu_block_page';
+  $items['admin']['access callback'] = TRUE;
+  $items['admin']['file'] = 'adminify.admin.inc';
+  $items['admin']['file path'] = $path;
 }
 
 /**
  * Implements hook_theme().
  */
-function adminify_theme() {
-  $theme = array();
-  $base = array('file' => 'adminify.theme.inc');
+function adminify_theme($existing, $type, $theme, $path) {
+  return array(
+    'adminify_links' => array(
+      'variables' => array('links' => NULL),
+      'file' => 'adminify.theme.inc',
+    ),
+  );
+}
 
-  $theme['adminify_page'] = array(
-    'render element' => 'page',
-    'template' => 'templates/adminify-page'
-  ) + $base;
-
-  $theme['adminify_login'] = array(
-    'render element' => 'page',
-    'template' => 'templates/adminify-login'
-  ) + $base;
-
-  $theme['adminify_sidebar_menu'] = array(
-    'variables' => array('links' => NULL),
-    'template' => 'templates/adminify-sidebar-menu'
-  ) + $base;
-
-  $theme['adminify_user_menu'] = array(
-    'variables' => array('links' => NULL),
-    'template' => 'templates/adminify-user-menu'
-  ) + $base;
-
-  $theme['adminify_tabs'] = array(
-    'variables' => array('tabs' => NULL),
-    'template' => 'templates/adminify-tabs'
-  ) + $base;
-
-  $theme['adminify_section'] = array(
-    'variables' => array('section' => NULL),
-    'template' => 'templates/adminify-section'
-  ) + $base;
-
-  return $theme;
+/**
+ * Implements hook_custom_theme().
+ */
+function adminify_custom_theme() {
+  // Set the administration theme.
+  if (_adminify_is_adminify_anonymous_page()) {
+    return ADMINIFY_DEFAULT_THEME;
+  }
+  else if (_adminify_is_adminify_page()) {
+    $info = _adminify_get_info_for_current_user();
+    return !empty($info['theme']) ? $info['theme'] : ADMINIFY_DEFAULT_THEME;
+  }
 }
 
 /**
  * Implements hook_page_build().
  */
 function adminify_page_build(&$page) {
-  if (_adminify_is_adminify_page()) {
-    // Render the admin page using adminify.tpl.php.
-    $page['#theme'] = 'adminify_page';
-    if (user_is_anonymous()) {
-      // If user is not logged in, show the login page.
-      $page['#theme'] = 'adminify_login';
-    }
+  if (_adminify_is_adminify_anonymous_page()) {
+    // If user is not logged in, show the login page.
+    $page['#theme'] = 'page__adminify__login';
+  }
+  else if (_adminify_is_adminify_page()) {
+    // Render the admin page using page--admin.tpl.php.
+    $page['#theme'] = 'page__adminify';
   }
 }
 
 /**
- * Implements hook_page_alter().
+ * Implements hook_preprocess_html().
  */
-function adminify_page_alter(&$page) {
-  // Hide all elements from page except content.
+function adminify_preprocess_html(&$variables) {
   if (_adminify_is_adminify_page()) {
-    foreach (element_children($page) as $element) {
-      if ($element != 'content') {
-        $page[$element]['#access'] = FALSE;
-      }
-    }
+    $variables['classes_array'][] = 'page-adminify';
+  }
+  if (_adminify_is_adminify_anonymous_page()) {
+    $variables['classes_array'][] = 'page-adminify-login';
+  }
+}
 
-    // For content, show only the system_main.  
-    foreach (element_children($page['content']) as $content_el) {
-      if ($content_el != 'system_main') {
-        $page['content'][$content_el]['#access'] = FALSE;
-      }
-    }
+/**
+ * Implements hook_preprocess_page().
+ */
+function adminify_preprocess_page(&$variables) {
+  global $user;
+  if (_adminify_is_adminify_page()) {
+    $variables['page'] += _adminify_build_page_for_path(current_path());
   }
 }
 
@@ -132,23 +107,6 @@ function adminify_form_user_login_submit(&$form, &$form_state) {
 }
 
 /**
- * Implements hook_custom_theme().
- */
-function adminify_custom_theme() {
-
-  // Temporarily set theme to rafix on /admin page.
-  if (current_path() == 'admin') {
-    return 'rafix';
-  }
-
-  // Set theme specified in yml file.
-  if (_adminify_is_adminify_page()) {
-    $theme = _adminify_get_theme_for_current_user();
-    return (!empty($theme)) ? $theme : variable_get('admin_theme');
-  }
-}
-
-/**
  * Loads adminify info.
  */
 function _adminify_get_info() {
@@ -163,12 +121,17 @@ function _adminify_get_info() {
     $spyc_library_path = libraries_get_path('spyc');
     _libraries_require_once($spyc_library_path . '/' . 'Spyc.php');
 
-    $adminify_infos = module_invoke_all('adminify_info');
-    foreach ($adminify_infos as $role => $adminify_info) {
-      // Check if file exists
-      $file_path = $adminify_info['path'] . '/' . $adminify_info['file'];
-      if (file_exists($file_path)) {
-        $info[$role] = Spyc::YAMLLoad($file_path);
+    // Get info defined by hook_adminify_info.
+    $hook = 'adminify_info';
+    foreach (module_implements($hook) as $module) {
+      $function = $module . '_' . $hook;
+      $module_path = drupal_get_path('module', $module);
+      if (function_exists($function)) {
+        $roles = call_user_func($function);
+        foreach ($roles as $role => $role_info) {
+          $file_path = $module_path . '/' . $role_info['file'];
+          $info[$role] = Spyc::YAMLLoad($file_path);
+        }
       }
     }
 
@@ -179,9 +142,14 @@ function _adminify_get_info() {
   }
 }
 
-
 /**
  * Get adminify info for a role.
+ *
+ * @param $role string
+ *  The name of the role.
+ *
+ * @return Array
+ *  An array of adminify info.
  */
 function _adminify_get_info_for_role($role) {
   $info = _adminify_get_info();
@@ -190,21 +158,26 @@ function _adminify_get_info_for_role($role) {
 
 /**
  * Get adminify info for a user.
+ *
+ * @param $user
+ *  The user object.
+ *
+ * @return Array
+ *  An array of adminify info.
  */
 function _adminify_get_info_for_user($user) {
-  $info = array();
-  foreach ($user->roles as $role) {
-    $adminify_info = _adminify_get_info_for_role($role);
-    if (count($adminify_info)) {
-      $info[$role] = $adminify_info;
-    }
-  }
+  // Get the most permissive roles.
+  $roles = array_intersect_key(user_roles(), $user->roles);
+  $role = array_pop($roles);
 
-  return $info;
+  return _adminify_get_info_for_role($role);
 }
 
 /**
- * Returns adminify info for the current user.
+ * Get adminify info for current user.
+ *
+ * @return Array
+ *  An array of adminify info.
  */
 function _adminify_get_info_for_current_user() {
   global $user;
@@ -212,194 +185,103 @@ function _adminify_get_info_for_current_user() {
 }
 
 /**
- * Returns sections from info array.
- */
-function _adminify_get_sections_from_info($info) {
-  $sections = array();
-
-  foreach ($info as $role => $role_info) {
-    if (isset($role_info['sections'])) {
-      // Permissons in Drupal are additive, so we merge sections.
-      $sections = array_merge($sections, $role_info['sections']);
-    }
-  }
-
-  return $sections;
-}
-
-function _adminify_get_links_from_info($info) {
-  $links = array();
-
-  foreach ($info as $role => $role_info) {
-    if (isset($role_info['links'])) {
-      $links = array_merge($links, $role_info['links']);
-    }
-  }
-
-  return $links;
-}
-
-/**
- * Get adminify paths.
- */
-function _adminify_get_paths() {
-  $paths = array();
-  $info = _adminify_get_info();
-
-  // Add admin to paths by default.
-  // $paths['authenticated user'][] = 'admin';
-
-  foreach ($info as $role => $role_info) {
-    $sections = $role_info['sections'];
-    foreach ($sections as $section) {
-      if (isset($section['pages'])) {
-        $pages = $section['pages'];
-        foreach ($pages as $page) { 
-          $paths[$role][] = $page['path'];
-        }
-      }
-    }
-  }
-
-  return $paths;
-}
-
-/**
- * Get adminify paths by role.
- */
-function _adminify_get_paths_by_role($role) {
-  $adminify_paths = _adminify_get_paths();
-  return (isset($adminify_paths[$role])) ? $adminify_paths[$role] : array();
-}
-
-/**
- * Get adminify paths for a user.
- */
-function _adminify_get_paths_for_user($user) {
-  $adminify_paths = array();
-
-  // Load adminify paths for each user role.
-  foreach ($user->roles as $role) {
-    if ($paths = _adminify_get_paths_by_role($role)) {
-      $adminify_paths[$role] = $paths;
-    }
-  }
-
-  return $adminify_paths;
-}
-
-/**
- * Get tabs for a path.
- */
-function _adminify_get_tabs($path) {
-  $tabs = array();
-  $info = _adminify_get_info();
-
-  foreach ($info as $role => $role_info) {
-    $sections = $role_info['sections'];
-    foreach ($sections as $section) {
-      $pages = $section['pages'];
-      foreach ($pages as $page) {
-        if (!empty($page['tabs'])) {
-          $tabs[$page['path']] = $page['tabs'];
-        }
-      }
-    }
-  }
-
-  return !empty($tabs[$path]) ? $tabs[$path] : array();
-}
-
-/**
- * Helper function to get the theme for the current user.
- */
-function _adminify_get_theme_for_current_user() {
-  global $user;
-  return _adminify_get_theme_for_user($user);
-}
-
-/**
- * Helper function to get the theme for a user.
- */
-function _adminify_get_theme_for_user($user) {
-  $roles = _adminify_order_roles_by_weight($user->roles);
-
-  // Drupal recomments that roles are ordered from least permissive to most permissive.
-  // We take the last role (most permissive) in the array.
-  $role = array_pop($roles);
-
-  // Get the adminify theme for this role.
-  return _adminify_get_theme_for_role($role);
-}
-
-/**
- * Helper function to get the theme for a role.
- */
-function _adminify_get_theme_for_role($role) {
-  $info = _adminify_get_info_for_role($role);
-  return isset($info['theme']) ? $info['theme'] : '';
-}
-
-/**
- * Helper function to check if for adminify page.
+ * Helper function to check if page is an adminify page.
  */
 function _adminify_is_adminify_page() {
-  global $user;
+  $paths = array(
+    'admin',
+    'admin/*',
+    'node/add/*',
+    'node/*/edit',
+    'user',
+    'user/*',
+  );
+  return drupal_match_path(current_path(), implode("\n", $paths));
+}
 
-  // Check when on /admin path.
-  if (current_path() == 'admin') {
-    if (user_is_anonymous() || _adminify_user_is_adminified($user)) {
-      return TRUE;
+/**
+ * Check if we are on an adminify page and user is anonymous.
+ */
+function _adminify_is_adminify_anonymous_page() {
+  return (_adminify_is_adminify_page() && user_is_anonymous());
+}
+
+function _adminify_build_page_for_path($path) {
+  $cid = 'adminify_page_for_path_' . md5($path);
+  if ($cache = cache_get($cid)) {
+    return $cache->data;
+  }
+  else {
+    $page = array();
+    $adminify_info = _adminify_get_info_for_current_user();
+
+    if (count($adminify_info)) {
+      $trail = adminify_get_active_trail();
+      foreach ($adminify_info['regions'] as $region_name) {
+        // Find the region based on the trail.
+        if (!empty($adminify_info[$region_name])) {
+          $region = $adminify_info[$region_name];
+        }
+        else {
+          // Find region in trail.
+          if (!empty($trail)) {
+            $region = _adminify_find_region_using_trail($adminify_info, $trail, $region_name);
+          }
+        }
+
+        // Build the region if found.
+        if (!empty($region)) {
+          $page[ADMINIFY_REGION_PREFIX . $region_name] = _adminify_build_region($region);
+        }
+      }
     }
-    else {
-      return FALSE;
-    }
+
+    // Save to cache.
+    cache_set($cid, $page);
+
+    return $page;
+  }
+}
+
+function _adminify_build_region($region) {
+  return array(
+    '#theme' => 'adminify_links',
+    '#links' => $region,
+  );
+}
+
+function adminify_get_active_trail() {
+  $trail = array();
+  $path = current_path();
+  $adminify_info = _adminify_get_info_for_current_user();
+
+  // Get the trail.
+  if ($trail = _adminify_array_search_recursive($path, $adminify_info)) {
+    // Remove path from trail.
+    array_pop($trail);
   }
 
-  // Return TRUE for all /admin pages for now.
-  if (drupal_match_path(current_path(), "admin/*")) {
-    return TRUE;
-  }
+  return $trail;
+}
 
-  $adminify_paths = _adminify_get_paths_for_user($user);
-  $current_path = current_path();
-
-  // Check if current user is within an adminify path.
-  foreach ($adminify_paths as $role => $paths) {
-    if (in_array($current_path, $paths)) {
-      return TRUE;
+function _adminify_array_search_recursive($needle,$haystack) {
+  foreach($haystack as $ikey => $value) {
+    if($needle === $value) {
+      return array($ikey);
+    } else if (is_array($value) && $jkey = _adminify_array_search_recursive($needle, $value)) {
+      array_unshift($jkey, $ikey);
+      return $jkey;
     }
   }
+}
 
+function _adminify_find_region_using_trail($info, $trail, $region_name) {
+  $temp = &$info;
+  foreach($trail as $key) {
+    $temp = &$temp[$key];
+    if (isset($temp[$region_name])) {
+      return $temp[$region_name];
+    }
+  }
   return FALSE;
-}
-
-// Checks if a user is adminified.
-function _adminify_user_is_adminified($user) {
-  $adminify_paths = _adminify_get_paths_for_user($user);
-  return (count($adminify_paths)) ? TRUE : FALSE;
-}
-
-// Returns adminify roles ordered by weight.
-function _adminify_get_roles() {
-  $roles = array();
-
-  $info = _adminify_get_info();
-  $adminify_roles = array_keys($info);
-
-  return _adminify_order_roles_by_weight($roles);
-}
-
-// Orders an array of user roles by weight.
-function _adminify_order_roles_by_weight($roles) {
-  $ordered_roles = array();
-  $user_roles = user_roles();
-
-  foreach ($user_roles as $user_role) {
-    if (in_array($user_role, $roles)) {
-      $ordered_roles[] = $user_role;
-    }
-  }
-
-  return $ordered_roles;
 }

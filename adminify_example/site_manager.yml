@@ -1,0 +1,83 @@
+theme: kitchen
+regions:
+  main_nav
+  user_nav
+  tabs
+main_nav:
+  dashboard:
+    title: Dashboard
+    path: admin
+    icon: home
+  menus:
+    title: Menus
+    path: admin/menus
+    icon: cutlery
+    tabs:
+      menus:
+        title: Menus
+        path: admin/menus
+      categories:
+        title: Categories
+        path: admin/menus/categories
+  blog_posts:
+    title: Blog
+    path: admin/blog_posts
+    icon: file-text-o
+    tabs:
+      blog_posts:
+        title: Blog Posts
+        path: admin/blog_posts
+      categories:
+        title: Categories
+        path: admin/blog_posts/categories
+      categories:
+        title: Tags
+        path: admin/blog_posts/tags
+  reservations:
+    title: Reservations
+    path: admin/reservations
+    icon: table
+  locations:
+    title: Locations
+    path: admin/locations
+    icon: map-marker
+  theme:
+    title: Appearance
+    path: admin/appearance/settings
+    icon: tint
+    tabs:
+      settings:
+        title: Settings
+        path: admin/appearance/settings
+      categories:
+        title: Themes
+        path: admin/appearance
+user_nav:
+  account:
+    title: Account
+    path: user
+    icon: user
+    dropdown:
+      account:
+        title: Account
+        path: user
+      logout:
+        title: Logout
+        path: user/logout
+  add:
+    title: Add
+    path: node/add
+    icon: plus
+    dropdown:
+      menu:
+        title: Menu
+        path: node/add/menu
+      blog_post:
+        title: Blog Post
+        path: node/add/blog-post
+      event:
+        title: Event
+        path: node/add/event
+      location:
+        title: Location
+        path: admin/locations/add
